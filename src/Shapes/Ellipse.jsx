@@ -74,7 +74,7 @@ class Ellipse {
         spheres : this.sphere,
       });
   
-      console.log("Ellipse stored:", { center: this.center, majorAxis: this.majorAxis, minorAxis: this.minorAxis });
+      // console.log("Ellipse stored:", { center: this.center, majorAxis: this.majorAxis, minorAxis: this.minorAxis });
     }
   }
 }
