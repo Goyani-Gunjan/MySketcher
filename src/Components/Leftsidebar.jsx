@@ -30,6 +30,7 @@ function Leftsidebar({ setSelectedShape }) {
 
  
 
+
   const handleVisibility = (id) => {
     console.log(id)
     ShapeStore.visible(id)

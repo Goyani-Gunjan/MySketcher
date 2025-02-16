@@ -1,7 +1,9 @@
 import { useRef, useEffect, useState } from "react";
 import * as THREE from "three";
 import ShapeFactory from "../Shapes/ShapeFactory";
-import shapeStore from "../Store/ShapeStore";
+import ShapeStore from "../Store/ShapeStore";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+
 
 // eslint-disable-next-line react/prop-types
 const CanvasArea = ({ drawShapes,setDrawShape }) => {
@@ -12,16 +14,18 @@ const CanvasArea = ({ drawShapes,setDrawShape }) => {
   const mouse = useRef(new THREE.Vector2());
   const planeRef = useRef(null);
   const cameraRef = useRef(null);
+  const controlsRef = useRef(null);
   const [shape, setShape] = useState(drawShapes); //	Stores the currently selected shape object.
   const [clickCount, setClickCount] = useState(0); // For non-polyline shapes
   const [canDraw, setCanDraw] = useState(false); // ✅ Allow drawing only after navbar click
   const [isPolylineDrawing, setIsPolylineDrawing] = useState(false);
 
   
+  
 
   useEffect(() => {
     const scene = sceneRef.current;
-    shapeStore.setScene(scene)
+    ShapeStore.setScene(scene)
     // Setup Camera
     const camera = new THREE.PerspectiveCamera(
       75,
@@ -51,9 +55,21 @@ const CanvasArea = ({ drawShapes,setDrawShape }) => {
     scene.add(plane);
     planeRef.current = plane;
 
+    // Orbit Controls
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.screenSpacePanning = false;
+    controls.minDistance = 5;
+    controls.maxDistance = 500;
+    controls.zoomSpeed = 1.2;
+    controls.enableZoom = true;
+    controlsRef.current = controls;
     // Animation Loop
     const animate = () => {
       requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);   
       if (rendererRef.current) {
         rendererRef.current.render(sceneRef.current, cameraRef.current);
       }
@@ -64,14 +80,33 @@ const CanvasArea = ({ drawShapes,setDrawShape }) => {
 
     // Mouse Events
     const handleMouseDown = (event) => {
+      event.stopPropagation(); // Prevent interfering with OrbitControls
         if (!canDraw || !shape) return;
       
         const rect = renderer.domElement.getBoundingClientRect();
         mouse.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
         mouse.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
         raycaster.current.setFromCamera(mouse.current, cameraRef.current);
+
+        // 🟢 Check if a shape was clicked (instead of just the plane)
+  const intersectsShapes = raycaster.current.intersectObjects(sceneRef.current.children, true);
+  
+  if (intersectsShapes.length > 0) {
+    const clickedObject = intersectsShapes[0].object;
+    
+    // ✅ Find the corresponding shape in ShapeStore
+    const clickedShape = ShapeStore.shapesHistory.find((s) => s.mesh === clickedObject);
+    if (clickedShape) {
+      console.log("Clicked:", clickedShape);
+      
+      // ✅ Pass the clicked shape ID to the properties panel
+      ShapeStore.setSelectedShape(clickedShape.id);
+      return; // Exit since we handled shape selection
+    }
+  }
       
         const intersects = raycaster.current.intersectObject(planeRef.current);
+        
         if (intersects.length > 0) {
           const point = intersects[0].point.clone();
           point.y += 0.1;
@@ -107,6 +142,7 @@ const CanvasArea = ({ drawShapes,setDrawShape }) => {
       
 
     const handleMouseMove = (event) => {
+      event.stopPropagation(); // Prevent interfering with OrbitControls
         if (!shape) return;
       
         const rect = renderer.domElement.getBoundingClientRect();
@@ -173,6 +209,8 @@ const CanvasArea = ({ drawShapes,setDrawShape }) => {
       setCanDraw(true); // ✅ Allow drawing when a shape is selected from navbar
     }
   }, [drawShapes]);
+
+  
 
   return (
     <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full" />

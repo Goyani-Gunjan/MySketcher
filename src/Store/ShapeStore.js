@@ -27,12 +27,12 @@ class ShapeStore {
     this.scene = scene
   }
 
-    // ✅ Set selected shape ID
-    setSelectedShape(shapeId) {
-      this.selectedShapeId = shapeId;
-      console.log(`Selected shape ID: ${shapeId}`);
-    }
-  
+  // ✅ Set selected shape ID
+  setSelectedShape(shapeId) {
+    this.selectedShapeId = shapeId;
+    console.log(`Selected shape ID: ${shapeId}`);
+  }
+
   setCurrentColor(color) {
     this.currentColor = color;
   }
@@ -90,7 +90,8 @@ class ShapeStore {
 
     this.shapesHistory.push(shapeData);
     console.log(`${shape.type} added to history:`, shapeData);
-    console.log("his", toJS(this.shapesHistory))
+    // console.log("his", toJS(this.shapesHistory))
+    // console.log("📜 Full Shape Store:", JSON.stringify(this.shapesHistory, null, 2));
   }
 
 
@@ -109,8 +110,8 @@ class ShapeStore {
       }
 
       // Remove the spheres if they exist
-      if (shapeDelete.sphere && Array.isArray(shapeDelete.sphere)) {
-        shapeDelete.sphere.forEach(sphere => {
+      if (shapeDelete.spheres && Array.isArray(shapeDelete.spheres)) {
+        shapeDelete.spheres.forEach(sphere => {
           this.scene.remove(sphere);
 
           // Dispose of sphere geometry and material
@@ -136,8 +137,8 @@ class ShapeStore {
       shapeVisible.shapeObject.visible = !shapeVisible.shapeObject.visible;
 
       // Toggle spheres visibility properly
-      if (shapeVisible.sphere && Array.isArray(shapeVisible.sphere)) {
-        shapeVisible.sphere.forEach(sphere => {
+      if (shapeVisible.spheres && Array.isArray(shapeVisible.spheres)) {
+        shapeVisible.spheres.forEach(sphere => {
           sphere.visible = shapeVisible.shapeObject.visible; // Match sphere visibility to line
         });
       }
@@ -273,6 +274,76 @@ class ShapeStore {
       console.log(`✅ Updated shape ${this.selectedShapeId} to color ${newColor}`);
     });
   }
+
+  getShapesData() {
+    return this.shapesHistory.map(shape => ({
+      id: shape.id,
+      type: shape.type,
+      color: shape.color || "#000000", // Default to black if no color
+      position: shape.shapeObject.position,
+      radius: shape.radius || null,
+      majorAxis: shape.majorAxis || null,
+      minorAxis: shape.minorAxis || null,
+      points: shape.points || [],
+    }));
+  }
+
+  addShapeFromFile(shapeData) {
+    console.log("📥 Loading shape:", shapeData);
+
+    let shapeObject;
+  
+
+    if (shapeData.type === "Line") {
+      const geometry = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(shapeData.startPoint.x, shapeData.startPoint.y, shapeData.startPoint.z),
+        new THREE.Vector3(shapeData.endPoint.x, shapeData.endPoint.y, shapeData.endPoint.z)
+      ]);
+      const material = new THREE.LineBasicMaterial({ color: shapeData.color });
+      shapeObject = new THREE.Line(geometry, material);
+
+
+
+    } else if (shapeData.type === "Circle") {
+      const geometry = new THREE.CircleGeometry(shapeData.radius, 64);
+      geometry.rotateX(-Math.PI / 2); // Correct orientation
+      const material = new THREE.MeshBasicMaterial({ color: shapeData.color, side: THREE.DoubleSide });
+      shapeObject = new THREE.Mesh(geometry, material);
+      shapeObject.position.set(shapeData.center.x, shapeData.center.y, shapeData.center.z);
+
+    } else if (shapeData.type === "Ellipse") {
+      const ellipseCurve = new THREE.EllipseCurve(
+        0, 0, shapeData.majorAxis, shapeData.minorAxis, 0, 2 * Math.PI, false, 0
+      );
+      const points = ellipseCurve.getPoints(50);
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      geometry.rotateX(-Math.PI / 2); // Correct orientation
+      const material = new THREE.LineBasicMaterial({ color: shapeData.color });
+      shapeObject = new THREE.Line(geometry, material);
+      shapeObject.position.set(shapeData.center.x, shapeData.center.y, shapeData.center.z);
+
+    } else if (shapeData.type === "PolyLine") {
+      const points = shapeData.points.map(p => new THREE.Vector3(p.x, p.y, p.z));
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const material = new THREE.LineBasicMaterial({ color: shapeData.color });
+      shapeObject = new THREE.Line(geometry, material);
+
+
+    
+    }
+
+    if (shapeObject) {
+      shapeObject.name = shapeData.type;
+      this.scene.add(shapeObject);
+      this.shapesHistory.push({ ...shapeData, shapeObject });
+    }
+
+    console.log("✅ Shape added:", shapeObject);
+  }
+
+
+
+
 }
 
 
