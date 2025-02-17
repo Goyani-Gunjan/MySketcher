@@ -11,11 +11,11 @@ class ShapeStore {
   isPolylineDrawing = false;
   scene = null;
   camera = null;
-  entityArray = [];
   renderer = null
   shapesHistory = [];
   currentColor = "#FF0000"; // 🔴 Default color (Red)
   selectedShapeId = null; // ✅ Track selected shape
+  currentOpacity = 1; // default opacity (fully opaque)
 
   constructor() {
     makeAutoObservable(this, {
@@ -33,9 +33,7 @@ class ShapeStore {
   }
 
   // ✅ Set selected shape ID
-  setSelectedShape(shapeId) {
-    console.log(shapeId);
-    
+  setSelectedShape(shapeId) {    
     this.selectedShapeId = shapeId;
     console.log(`Selected shape ID: ${this.selectedShapeId}`);
   }
@@ -44,6 +42,10 @@ class ShapeStore {
     this.currentColor = color;
   }
 
+   // Set current opacity for new shapes
+   setCurrentOpacity(opacity) {
+    this.currentOpacity = opacity;
+  }
   setDrawShapes(shape) {
     this.drawShapes = shape;
   }
@@ -70,10 +72,14 @@ class ShapeStore {
   addToHistory(shape) {
     if (!shape || !shape.type) return; // Prevent invalid entries
     console.log("📝 addToHistory() called!", shape);
+
+      // Count how many of this type of shape are already in history
+  const shapeCount = this.shapesHistory.filter(s => s.type === shape.type).length;
+  const shapeTitle = `${shape.type} ${shapeCount + 1}`; // Naming like "Line 1", "Circle 1", etc.
     const shapeData = {
       id: uuidv4(),
       type: shape.type,
-      title: shape.type,
+      title: shapeTitle,
       shapeObject: shape.shapeObject, // Store the THREE.js object
       spheres: shape.spheres, // ✅ Fix: store as "spheres"
       color: this.currentColor, // ✅ Store shape color
@@ -278,7 +284,7 @@ class ShapeStore {
 
   
 
-  updateShapeColor(newColor) {
+  updateShapeColor(newColor , opacity) {
     runInAction(() => {
       if (!this.selectedShapeId) return;
 
@@ -287,15 +293,12 @@ class ShapeStore {
 
       shape.color = newColor; // ✅ Update color in history
       shape.shapeObject.material.color.set(newColor); // ✅ Change color in THREE.js
+          // ✅ Update opacity in history and material
+    shape.shapeObject.material.opacity = opacity; // Update opacity
+    shape.shapeObject.material.transparent = opacity < 1; // Make material transparent if opacity is < 1
       shape.shapeObject.material.needsUpdate = true;
 
-      // ✅ Update spheres (if any)
-      if (shape.spheres && Array.isArray(shape.spheres)) {
-        shape.spheres.forEach((sphere) => {
-          sphere.material.color.set(newColor);
-          sphere.material.needsUpdate = true;
-        });
-      }
+
 
       console.log(`✅ Updated shape ${this.selectedShapeId} to color ${newColor}`);
     });

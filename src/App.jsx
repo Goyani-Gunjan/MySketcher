@@ -14,10 +14,10 @@ function App() {
 
   return (
        <div className='min-h-screen flex min-w-[98.8vw] absolute'>
-          <CanvasArea drawShapes={drawShapes} setDrawShape={setDrawShapes} />
+          <CanvasArea drawShapes={drawShapes} setDrawShape={setDrawShapes} setSelectedShape={setSelectedShape} />
           <Leftsidebar setSelectedShape={setSelectedShape}/>
           <Navbar setDrawShapes={setDrawShapes} />
-          <RightBar selectedShape={selectedShape}/>
+          <RightBar selectedShape={selectedShape} setSelectedShape={setSelectedShape}/>
        </div>
   ); 
 }

@@ -20,6 +20,7 @@ function Navbar({ setDrawShapes }) {
     const file = event.target.files[0];
     if (file) {
       uploadShapesFromFile(file); // Call upload function
+      event.target.value = ""; // ✅ Reset file input to allow re-uploading
     }
   };
 
@@ -36,7 +37,7 @@ function Navbar({ setDrawShapes }) {
         <GeometryList type={FaRegSave} title={"Save"} classes="p-2  mr-8 bg-gray-100 rounded-lg" onClick={saveShapesToFile} />
         
         {/* Upload Button */}
-        <button className="p-2 mr-8 bg-gray-100 rounded-lg flex flex-col items-center " onClick={handleButtonClick}>
+        <button className="p-2 mr-8 bg-gray-100 rounded-lg flex flex-col items-center hover:bg-gray-300" onClick={handleButtonClick}>
           <MdOutlineUploadFile className="mr-2 text-2xl " /> <div className="text-lg mt-1">Upload</div>
         </button>
         

@@ -1,5 +1,5 @@
 import PropTypes from "prop-types";
-import {  useEffect, useState } from "react";
+import {  useState } from "react";
 import { observer } from "mobx-react-lite"; // Import observer for reactivity
 import ShapeStore from "../Store/ShapeStore"; // Import ShapeStore
 
@@ -13,9 +13,6 @@ const PropertiesPanel = observer(({ shapeId }) => {
     console.log("shape : ",shape);
   }
 
-  useEffect( ()=>{
-  console.log(1234)
-  },[shapeId])
 
 
   // const shape = ShapeStore.shapesHistory.find((s) => s.id === shapeId);

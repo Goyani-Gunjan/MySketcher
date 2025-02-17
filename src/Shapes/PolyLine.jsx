@@ -18,12 +18,12 @@ class PolyLine {
       // 🟢 Start new polyline
       this.drawing = true;
       this.points = [point.clone()];
-      this.addSphere(point); // Add sphere at the first point
+      // this.addSphere(point); // Add sphere at the first point
     } 
 
     // 🟡 Add new point on each click
     this.points.push(point.clone());
-    this.addSphere(point); // Add sphere at each new point
+    // this.addSphere(point); // Add sphere at each new point
     this.lastPoint = point.clone(); // Store last point for preview
 
     // Remove temp preview line when adding a new point
@@ -88,11 +88,11 @@ class PolyLine {
     }
 
     // ✅ Remove extra spheres before re-adding
-    this.spheres.forEach(sphere => this.scene.remove(sphere));
-    this.spheres = [];
+    // this.spheres.forEach(sphere => this.scene.remove(sphere));
+    // this.spheres = [];
 
     // ✅ Add spheres only for the unique points
-    uniquePoints.forEach(point => this.addSphere(point));
+    // uniquePoints.forEach(point => this.addSphere(point));
 
     // ✅ Update the line with only unique points
     if (uniquePoints.length > 1) {

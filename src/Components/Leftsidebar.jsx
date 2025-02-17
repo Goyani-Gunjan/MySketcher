@@ -13,6 +13,7 @@ import ShapeStore from "../Store/ShapeStore"; // Import shape store
 function Leftsidebar({ setSelectedShape }) {
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
   const [shapes, setShapes] = useState([]); // Store shape history
+  const [searchQuery, setSearchQuery] = useState(""); // State to hold search input
 
   useEffect(() => {
     setShapes([...ShapeStore.shapesHistory]);
@@ -28,24 +29,19 @@ function Leftsidebar({ setSelectedShape }) {
   };
 
   const handleVisibility = (id) => {
-    console.log(id);
     ShapeStore.visible(id);
   };
 
-  // Hide all shapes in the scene
   const handleFileVisibility = () => {
     shapes.forEach((shape) => ShapeStore.visible(shape.id, false)); // Make all shapes invisible
     setShapes([...ShapeStore.shapesHistory]); // Re-render shapes after making them invisible
   };
 
   const handleDelete = (id) => {
-    console.log(id);
     ShapeStore.removeShape(id);
     setShapes([...ShapeStore.shapesHistory]); // Update UI after deletion
   };
 
-   // Delete all shapes (clear all shapes in the file)
-  // Delete all shapes (clear all shapes in the file)
   const handleDeleteFile = () => {
     shapes.forEach((shape) => {
       ShapeStore.removeShape(shape.id); // Remove each shape
@@ -61,13 +57,31 @@ function Leftsidebar({ setSelectedShape }) {
     PolyLine: MdPolyline,
   };
 
+  // Filter shapes based on the search query
+  const filteredShapes = shapes.filter((shape) => {
+    return shape.title.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value); // Update search query on change
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100 border-0 rounded-lg w-[350px] h-screen z-20 mt-10 ml-4">
+    <div className="min-h-screen bg-gray-100 border-0 rounded-lg w-[350px] h-full z-20 mt-10 ml-4">
       <div className="flex justify-between items-center mt-3 ml-2 mr-2">
-        <div className="text-xl">List of Created Objects</div>
-        <button>
-          <FaSearch />
-        </button>
+        <div className="text-lg">List of Created Objects</div>
+        <div className="flex items-center">
+          <input
+            type="text"
+            placeholder="Search Shapes..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="px-2 py-1 border rounded-md mr-2"
+          />
+          <button>
+            <FaSearch />
+          </button>
+        </div>
       </div>
       <hr className="h-px mt-3 bg-gray-300 border-0" />
 
@@ -79,10 +93,10 @@ function Leftsidebar({ setSelectedShape }) {
           <div className="text-lg">My file 1</div>
         </div>
         <div>
-          <button className="text-2xl mr-2" onClick={handleFileVisibility}>
+          <button className="text-2xl mr-2 hover:bg-gray-300" onClick={handleFileVisibility}>
             <GoEye />
           </button>
-          <button className="text-2xl mr-2"  onClick={handleDeleteFile}>
+          <button className="text-2xl mr-2 hover:bg-gray-300" onClick={handleDeleteFile}>
             <RiDeleteBin5Line />
           </button>
         </div>
@@ -91,33 +105,30 @@ function Leftsidebar({ setSelectedShape }) {
       {/* Dropdown with Shape History */}
       {isDropdownVisible && (
         <>
-          {shapes.length > 0 ? (
-            shapes.map((shape) => (
-              <div
-                key={shape.id}
-                className="flex justify-between items-center w-[335px] ml-5 mt-3"
-              >
+          {filteredShapes.length > 0 ? (
+            filteredShapes.map((shape) => (
+              <div key={shape.id} className="flex justify-between items-center w-[335px] ml-5 mt-3">
                 {/* Shape Icon & Title */}
                 <GeometryList
                   type={shapeIcons[shape.type] || GoCircle} // Default to Circle icon if not found
                   title={shape.title}
-                  classes="flex"
+                  classes="flex "
                   onClick={() => handleShapeClick(shape.id)}
                 />
 
                 {/* Eye & Delete Buttons */}
                 <div className="flex">
-                  <button className="text-2xl mr-2">
+                  <button className="text-2xl mr-2 hover:bg-gray-300">
                     <GoEye onClick={() => handleVisibility(shape.id)} />
                   </button>
-                  <button className="text-2xl mr-5">
+                  <button className="text-2xl mr-5 hover:bg-gray-300">
                     <RiDeleteBin5Line onClick={() => handleDelete(shape.id)} />
                   </button>
                 </div>
               </div>
             ))
           ) : (
-            <p className="ml-5 mt-3 text-gray-500">No shapes created yet.</p>
+            <p className="ml-5 mt-3 text-gray-500">No shapes match your search.</p>
           )}
         </>
       )}

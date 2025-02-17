@@ -2,7 +2,6 @@ import { useRef, useEffect, useState } from "react";
 import * as THREE from "three";
 import ShapeFactory from "../Shapes/ShapeFactory";
 import ShapeStore from "../Store/ShapeStore";
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 
 // eslint-disable-next-line react/prop-types
@@ -14,12 +13,11 @@ const CanvasArea = ({ drawShapes, setDrawShape, setSelectedShape }) => {
   const mouse = useRef(new THREE.Vector2());
   const planeRef = useRef(null);
   const cameraRef = useRef(null);
-  const controlsRef = useRef(null);
+  
   const [shape, setShape] = useState(drawShapes); //	Stores the currently selected shape object.
   const [clickCount, setClickCount] = useState(0); // For non-polyline shapes
   const [canDraw, setCanDraw] = useState(false); // ✅ Allow drawing only after navbar click
   const [isPolylineDrawing, setIsPolylineDrawing] = useState(false);
-  
 
   useEffect(() => {
     const scene = sceneRef.current;
@@ -46,7 +44,8 @@ const CanvasArea = ({ drawShapes, setDrawShape, setSelectedShape }) => {
     const planeGeometry = new THREE.PlaneGeometry(5000, 5000);
     const planeMaterial = new THREE.MeshBasicMaterial({
       color: "white",
-      side: THREE.DoubleSide,
+      side: THREE.DoubleSide, transparent: true,
+      
     });
     const plane = new THREE.Mesh(planeGeometry, planeMaterial);
     plane.rotation.x = -Math.PI / 2;
@@ -55,19 +54,11 @@ const CanvasArea = ({ drawShapes, setDrawShape, setSelectedShape }) => {
 
     ShapeStore.setScene(scene, camera, renderer);
     // Orbit Controls
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.screenSpacePanning = false;
-    controls.minDistance = 5;
-    controls.maxDistance = 500;
-    controls.zoomSpeed = 1.2;
-    controls.enableZoom = true;
-    controlsRef.current = controls;
+  
     // Animation Loop
     const animate = () => {
       requestAnimationFrame(animate);
-      controls.update();
+ 
       renderer.render(scene, camera);
       if (rendererRef.current) {
         rendererRef.current.render(sceneRef.current, cameraRef.current);
@@ -77,10 +68,8 @@ const CanvasArea = ({ drawShapes, setDrawShape, setSelectedShape }) => {
 
     // Mouse Events
     const handleMouseDown = (event) => {
-
       event.stopPropagation(); // Prevent interfering with OrbitControls
       if (!canDraw || !shape) return;
-
 
       const rect = renderer.domElement.getBoundingClientRect();
       mouse.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
@@ -105,7 +94,7 @@ const CanvasArea = ({ drawShapes, setDrawShape, setSelectedShape }) => {
 
           // ✅ Pass the clicked shape ID to the properties panel
           ShapeStore.setSelectedShape(clickedShape.id);
-          setSelectedShape(clickedShape.id)
+          setSelectedShape(clickedShape.id);
           return; // Exit since we handled shape selection
         }
       }
@@ -143,7 +132,6 @@ const CanvasArea = ({ drawShapes, setDrawShape, setSelectedShape }) => {
           }
         }
       }
-  
     };
 
     const handleMouseMove = (event) => {
@@ -186,8 +174,8 @@ const CanvasArea = ({ drawShapes, setDrawShape, setSelectedShape }) => {
       }
     };
 
-     // Separate Click Handler for Raycasting (Checking Shape History)
-     const handleClick = (event) => {
+    // Separate Click Handler for Raycasting (Checking Shape History)
+    const handleClick = (event) => {
       event.stopPropagation(); // Prevent interfering with OrbitControls
 
       // Update mouse position
@@ -195,43 +183,46 @@ const CanvasArea = ({ drawShapes, setDrawShape, setSelectedShape }) => {
       mouse.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       mouse.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
+
+
       // Perform raycasting
       raycaster.current.setFromCamera(mouse.current, cameraRef.current);
 
-      // console.log(ShapeStore.entityArray)
-      console.log(ShapeStore.shapesHistory);
-      ShapeStore.shapesHistory.map((shape)=>
-      {
-        console.log(shape);
-        const mesh = shape.shapeObject;
-        const intersects = raycaster.current.intersectObjects([mesh], true);
+      console.log("Shapes in history:", ShapeStore.shapesHistory);
 
-        // console.log(intersects);
-        
-
-        // console.log("inter",intersects)
-        // console.log("shape",intersects)
-        if (intersects.length > 0) {
-          const clickedObject = intersects[0].object;
-          console.log(clickedObject);
-          
-  
-          // Check if any shape intersects
-          // const clickedShape = ShapeStore.shapesHistory.find(
-          //   (s) => s.mesh === clickedObject.object
-          // );
-          // console.log("objec",clickedShape)
-          ShapeStore.setSelectedShape(clickedObject.uuid);
+      for (let shape of ShapeStore.shapesHistory) {
+        console.log("🟢 Checking shape:", shape);
+    
+        const mesh = shape.shapeObject; // Ensure we are using the correct mesh reference
+        if (!mesh) {
+          console.warn("⚠️ Missing mesh in shape:", shape);
+          continue;
         }
-
-      })
-      
+    
+        const intersects = raycaster.current.intersectObject(mesh, true);
+        console.log("🎯 Intersects:", intersects[0]);
+    
+        if (intersects.length > 0) {
+          console.log("✅ Shape clicked:", shape);
+    
+          // Extract ID correctly
+          const shapeId = shape.id; // Ensure we get the correct ID
+          console.log("📌 Passing ID to store:", shapeId);
+    
+          // Update selected shape in store
+          ShapeStore.setSelectedShape(shapeId);
+          setSelectedShape(shapeId);
+          return;
+        }
+        
+      }
+    
+    
       // Check for intersections with all objects in the scene
-     
     };
 
     // Attach event listeners
-    window.addEventListener('pointerdown', handleMouseDown);
+    window.addEventListener("pointerdown", handleMouseDown);
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("dblclick", handleDoubleClick);
     window.addEventListener("click", handleClick); // Separate click event for raycasting
@@ -243,6 +234,8 @@ const CanvasArea = ({ drawShapes, setDrawShape, setSelectedShape }) => {
       window.removeEventListener("dblclick", handleDoubleClick);
       window.removeEventListener("click", handleClick); // Cleanup separate click event
 
+      
+
       return () => {
         renderer.dispose(); // Cleanup WebGL context
         document.body.removeChild(renderer.domElement);
@@ -253,6 +246,7 @@ const CanvasArea = ({ drawShapes, setDrawShape, setSelectedShape }) => {
   useEffect(() => {
     if (drawShapes) {
       if (rendererRef.current) {
+        console.log("Resetting WebGL state to avoid shader errors...");
         rendererRef.current.state.reset(); // 🔥 Fix WebGL errors when switching
       }
       setShape(ShapeFactory.createShape(drawShapes, sceneRef.current));
@@ -261,7 +255,7 @@ const CanvasArea = ({ drawShapes, setDrawShape, setSelectedShape }) => {
   }, [drawShapes]);
 
   return (
-    <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full" />
+    <canvas ref={canvasRef} className="absolute fixed top-0 left-0 w-full h-full" />
   );
 };
 
