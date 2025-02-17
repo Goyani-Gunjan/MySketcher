@@ -1,13 +1,24 @@
 import PropTypes from "prop-types";
-import { useState } from "react";
+import {  useEffect, useState } from "react";
 import { observer } from "mobx-react-lite"; // Import observer for reactivity
 import ShapeStore from "../Store/ShapeStore"; // Import ShapeStore
 
 const PropertiesPanel = observer(({ shapeId }) => {
   if (!shapeId) return null; // Prevent rendering issues if no shape is selected
 
+  let shape;
   // Find the shape in the history
-  const shape = ShapeStore.shapesHistory.find((s) => s.id === shapeId);
+  if(ShapeStore.shapesHistory.find((s) => s.id === shapeId)){
+    shape = ShapeStore.shapesHistory.find((s) => s.id === shapeId);
+    console.log("shape : ",shape);
+  }
+
+  useEffect( ()=>{
+  console.log(1234)
+  },[shapeId])
+
+
+  // const shape = ShapeStore.shapesHistory.find((s) => s.id === shapeId);
   if (!shape) return <p>No shape found</p>;
 
   // Local state for inputs

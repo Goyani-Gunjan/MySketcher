@@ -1,8 +1,10 @@
 import * as THREE from "three";
 import ShapeStore from "../Store/ShapeStore";
 
-class Ellipse {
+class Ellipse extends THREE.Object3D{
+
   constructor(scene) {
+    super()
     this.scene = scene;
     this.drawing = false;
     this.ellipseMesh = null;
@@ -73,7 +75,7 @@ class Ellipse {
         shapeObject: this.ellipseMesh,
         spheres : this.sphere,
       });
-  
+   ShapeStore.entityArray.push(this.ellipseMesh)
       // console.log("Ellipse stored:", { center: this.center, majorAxis: this.majorAxis, minorAxis: this.minorAxis });
     }
   }

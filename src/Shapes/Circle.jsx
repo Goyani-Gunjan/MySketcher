@@ -1,8 +1,9 @@
 import * as THREE from "three";
 import ShapeStore from '../Store/ShapeStore'
 
-class Circle {
+class Circle  {
   constructor(scene) {
+
     this.scene = scene;
     this.drawing = false;
     this.center = null;
@@ -63,6 +64,7 @@ class Circle {
         shapeObject: this.circleMesh, // Store the THREE.js Circle Mesh
         spheres : this.sphere,
       });
+      // ShapeStore.entityArray.push(this.circleMesh)
       console.log("Circle stored:", { center: this.center, radius: this.radius });
     }
   }

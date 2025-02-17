@@ -1,8 +1,9 @@
 import * as THREE from "three";
 import ShapeStore from "../Store/ShapeStore"; // Import shapeStore
 
-class Line {
+class Line extends THREE.Object3D{
     constructor(scene) {
+      super();
     this.scene = scene;
     this.drawing = false;
     this.line = null;
@@ -25,44 +26,51 @@ class Line {
     // Add Sphere at Start Point
     this.addSphere(startPoint);
   }
-
   updateDrawing(endPoint) {
     if (!this.line) return;
 
-    const points = this.line.geometry.attributes.position.array;
-    points[3] = endPoint.x;
-    points[4] = endPoint.y;
-    points[5] = endPoint.z;
+    // Retrieve the existing positions array
+    const positions = this.line.geometry.attributes.position.array;
+
+    // Update the last point of the line
+    positions[3] = endPoint.x;
+    positions[4] = endPoint.y;
+    positions[5] = endPoint.z;
+
+    // Mark the geometry as needing an update
     this.line.geometry.attributes.position.needsUpdate = true;
 
+    // **Ensure we store the correct final endPoint**
+    this.endPoint = new THREE.Vector3(positions[3], positions[4], positions[5]);
 
-    this.endPoint = endPoint.clone(); // Update end point
-  }
+}
 
-  stopDrawing() {
-    if (!this.line) return;
-    console.log("🛑 stopDrawing() called!"); // Debug log
-    this.drawing = false;
-  
-    // Add Sphere at End Point
-      const endPoint = new THREE.Vector3(
-        this.line.geometry.attributes.position.array[3],
-        this.line.geometry.attributes.position.array[4],
-        this.line.geometry.attributes.position.array[5]
-      );
-      this.endPoint = endPoint; // Store final end point
-      this.addSphere(endPoint);
 
-        // Save the shape to shapeStore
-    this.saveShape();
-    
-  }
+stopDrawing() {
+  if (!this.line) return;
+  console.log("🛑 stopDrawing() called!");
+
+  this.drawing = false;
+
+  // ✅ Get the exact last position of the line
+  const positions = this.line.geometry.attributes.position.array;
+  this.endPoint = new THREE.Vector3(positions[3], positions[4], positions[5]);
+
+  console.log("📌 Corrected End Point:", this.endPoint);
+
+  // ✅ Make sure the sphere is exactly at the end of the line
+  this.addSphere(this.endPoint);
+
+  // ✅ Save the shape
+  this.saveShape();
+}
+
 
   addSphere(position) {
     const geometry = new THREE.SphereGeometry(1.5, 16, 16); // Sphere size
     const material = new THREE.MeshBasicMaterial({ color : ShapeStore.currentColor }); // Red color
     const sphere = new THREE.Mesh(geometry, material);
-    sphere.position.copy(position);
+    sphere.position.copy(position); 
     this.scene.add(sphere);
     this.spheres.push(sphere);
   }
@@ -79,6 +87,7 @@ class Line {
         shapeObject: this.line,
         spheres : this.spheres,
       });
+      ShapeStore.entityArray.push(this.line)
     }else {
       console.warn("⚠️ Spheres not added correctly:", this.spheres);
   }

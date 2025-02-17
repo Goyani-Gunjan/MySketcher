@@ -10,6 +10,9 @@ class ShapeStore {
   canDraw = false;
   isPolylineDrawing = false;
   scene = null;
+  camera = null;
+  entityArray = [];
+  renderer = null
   shapesHistory = [];
   currentColor = "#FF0000"; // 🔴 Default color (Red)
   selectedShapeId = null; // ✅ Track selected shape
@@ -23,14 +26,18 @@ class ShapeStore {
     });
   }
 
-  setScene(scene) {
-    this.scene = scene
+  setScene(scene, camera, renderer) {
+    this.scene = scene;
+    this.camera = camera;
+    this.renderer = renderer;
   }
 
   // ✅ Set selected shape ID
   setSelectedShape(shapeId) {
+    console.log(shapeId);
+    
     this.selectedShapeId = shapeId;
-    console.log(`Selected shape ID: ${shapeId}`);
+    console.log(`Selected shape ID: ${this.selectedShapeId}`);
   }
 
   setCurrentColor(color) {
@@ -90,7 +97,7 @@ class ShapeStore {
 
     this.shapesHistory.push(shapeData);
     console.log(`${shape.type} added to history:`, shapeData);
-    // console.log("his", toJS(this.shapesHistory))
+    console.log("his", toJS(this.shapesHistory))
     // console.log("📜 Full Shape Store:", JSON.stringify(this.shapesHistory, null, 2));
   }
 
@@ -144,6 +151,23 @@ class ShapeStore {
       }
     }
   }
+  
+    // Toggle visibility of shapes based on fileId
+    toggleFileVisibility(fileId) {
+      // Loop through all shapes in history and toggle visibility if they match the fileId
+      this.shapesHistory.forEach(shape => {
+        if (shape.fileId === fileId) {
+          shape.shapeObject.visible = !shape.shapeObject.visible;
+          if (shape.spheres && Array.isArray(shape.spheres)) {
+            shape.spheres.forEach(sphere => {
+              sphere.visible = shape.shapeObject.visible;
+            });
+          }
+        }
+      });
+    }
+
+  
 
   // ✅ **Fix: Ensure updates happen inside an action**
   updateShape(shapeId, updatedData) {
@@ -251,6 +275,8 @@ class ShapeStore {
       console.log(`✅ Shape ${shapeId} updated in the scene!`, shape);
     });
   }
+
+  
 
   updateShapeColor(newColor) {
     runInAction(() => {
